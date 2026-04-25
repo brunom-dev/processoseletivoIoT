@@ -231,73 +231,52 @@ Após concluir o desenvolvimento:
 
 ## 📝 Relatório do Candidato
 
-O arquivo **`README.md` do seu repositório** deve ser utilizado como o  
-**relatório final do desafio técnico**.
-
-Preencha todas as seções abaixo de forma **clara, objetiva e técnica**.
-
-> 💡 **Dica importante**  
-> Não é necessário um relatório extenso.  
-> O principal critério é demonstrar **clareza nas decisões técnicas**, organização e entendimento do sistema embarcado desenvolvido.
-
----
-
 ### 👤 Identificação do Candidato
 
-- **Nome completo:**  
-- **GitHub:**  
+- **Nome completo: BRUNO DA SILVA MACEDO**  
+- **GitHub: [https://github.com/brunom-dev]**  
 
 ---
 
 ## 1️⃣ Visão Geral da Solução
 
-Descreva, em poucas palavras:
-
-- Qual é o objetivo do seu projeto  
-- O que o sistema embarcado simulado faz  
-- Como o usuário interage com ele (se aplicável)
+O projeto consiste no firmware para um painel de controle de uma máquina industrial. O objetivo do sistema é comandar com segurança os ciclos de operação do equipamento, garantindo que a máquina respeite um tempo de processamento contínuo e, obrigatoriamente, passe por um ciclo de resfriamento antes de aceitar um novo comando. A interação é feita de forma tátil pelo operador através de um botão de acionamento.
 
 ---
 
 ## 2️⃣ Arquitetura do Sistema Embarcado
 
-Explique a arquitetura lógica do seu projeto, abordando:
+A arquitetura do firmware foi baseada no padrão de **Máquina de Estados Finita (FSM)**. O controle lógico não possui "paradas" (delays bloqueantes), operando em um loop contínuo que avalia transições baseadas em tempo e eventos.
 
-- Fluxo principal do programa (`main.py`)  
-- Estrutura de estados, loops ou temporizações  
-- Como os componentes interagem entre si  
-
-Se desejar, utilize tópicos ou um pequeno diagrama em texto.
+A máquina transita entre três estados:
+1. **IDLE (0):** Sistema em repouso aguardando comando do operador.
+2. **RUNNING (1):** Equipamento operando em carga máxima (duração fixa de 5 segundos).
+3. **COOLDOWN (2):** Estágio de resfriamento e segurança (duração de 3 segundos).
 
 ---
 
 ## 3️⃣ Componentes Utilizados na Simulação
 
-Liste os principais componentes definidos no `diagram.json`, por exemplo:
-
-- Tipo de placa utilizada  
-- LEDs, botões, sensores, atuadores, etc.  
-- Função de cada componente no sistema  
+O hardware foi configurado no arquivo `diagram.json` contendo:
+- **Microcontrolador:** ESP32.
+- **LED Vermelho:** Indicador visual de restrição (Máquina Parada / Resfriamento).
+- **LED Verde:** Indicador visual de liberação (Máquina Operando).
+- **Push Button:** Atuador de entrada do operador.
+- **Resistores:** Utilizados em série com os LEDs para limitação de corrente, respeitando as boas práticas de projeto de hardware. 
 
 ---
 
 ## 4️⃣ Decisões Técnicas Relevantes
 
-Explique brevemente decisões importantes tomadas durante o desenvolvimento, como:
+- **Temporização Não-Bloqueante (Trade-off de Arquitetura):** Em sistemas embarcados simples, é comum o uso de `time.sleep()`. No entanto, essa abordagem congela a CPU. Optei por utilizar `time.ticks_ms()` para calcular deltas de tempo. 
+- **Filtro de Debounce via Software:** Sinais mecânicos geram ruído (bouncing). Implementei uma janela de validação de 50ms na função `check_button()` para garantir que não houvesse múltiplos acionamentos da máquina.
 
-- Organização do código  
-- Uso de funções, estados ou constantes  
-- Estratégias para temporização ou controle lógico  
 
 ---
 
 ## 5️⃣ Resultados Obtidos
 
-Descreva o comportamento final do sistema:
-
-- O que funciona corretamente  
-- Quais requisitos foram atendidos  
-- Resultado observado na simulação do Wokwi  
+A simulação foi executada com 100% de sucesso. Ao energizar a placa, o sistema inicializa no estado `IDLE` (LED Vermelho aceso). Pressionar o botão ativa o estado `RUNNING` (LED Verde aceso). Decorridos exatos 5 segundos de operação, a FSM força a transição para `COOLDOWN`, onde ambos os LEDs alternam (pisca-alerta a cada 250ms) por 3 segundos de forma não-bloqueante, retornando ao estado `IDLE` de maneira autônoma ao final do ciclo.
 
 ---
 
